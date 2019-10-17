@@ -1,0 +1,4 @@
+rootProject.name = 'BetPawa'
+include 'Server'
+include 'Client'
+
