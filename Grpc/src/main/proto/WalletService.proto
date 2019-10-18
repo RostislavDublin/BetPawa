@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+package rdublin.wallet.grpc;
+
+message WalletOperationWithdraw {
+    int32 userId = 1;
+    int32 amount = 2;
+    string currency = 3;
+}
+message WalletOperationDeposit {
+    int32 userId = 1;
+    int32 amount = 2;
+    string currency = 3;
+}
+message WalletOperationConfirmation {
+    string message = 1;
+}
+
+message WalletBalance {
+    int32 userId = 1;
+}
+message WalletBalanceResult {
+    int32 userId = 1;
+    map<string,int32> amounts = 2;
+}
+
+service WalletService {
+    rpc withdraw (WalletOperationWithdraw) returns (WalletOperationConfirmation);
+    rpc deposit (WalletOperationDeposit) returns (WalletOperationConfirmation);
+    rpc balance (WalletBalance) returns (WalletBalanceResult);
+}

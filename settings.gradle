@@ -1,4 +1,5 @@
-rootProject.name = 'BetPawa'
+rootProject.name = 'Wallet'
 include 'Server'
 include 'Client'
+include 'Grpc'
 

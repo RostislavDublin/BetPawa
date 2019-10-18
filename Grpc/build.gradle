@@ -1,0 +1,32 @@
+plugins {
+    id 'com.google.protobuf' version '0.8.8'
+}
+
+idea {
+    module {
+        sourceDirs += file("${projectDir}/src/build/generated/source/main/java");
+        sourceDirs += file("${projectDir}/src/build/generated/source/main/grpc");
+    }
+}
+
+protobuf {
+    //generatedFilesBaseDir = "$projectDir/src/main/java/generated"
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.10.0"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.24.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+dependencies {
+    implementation 'io.grpc:grpc-protobuf:1.24.0'
+    implementation 'io.grpc:grpc-stub:1.24.0'
+}
