@@ -3,3 +3,7 @@
 /build/
 /Client/build/
 /Server/build/
+/Client/out/production/
+/Grpc/build/
+/Grpc/out/production/classes/rdublin/wallet/grpc/
+/Server/out/production/
