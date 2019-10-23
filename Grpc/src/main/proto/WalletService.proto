@@ -13,7 +13,7 @@ message WalletOperationDeposit {
     int32 amount = 2;
     string currency = 3;
 }
-message WalletOperationConfirmation {
+message WalletOperationResult {
     string message = 1;
 }
 
@@ -26,7 +26,7 @@ message WalletBalanceResult {
 }
 
 service WalletService {
-    rpc withdraw (WalletOperationWithdraw) returns (WalletOperationConfirmation);
-    rpc deposit (WalletOperationDeposit) returns (WalletOperationConfirmation);
+    rpc withdraw (WalletOperationWithdraw) returns (WalletOperationResult);
+    rpc deposit (WalletOperationDeposit) returns (WalletOperationResult);
     rpc balance (WalletBalance) returns (WalletBalanceResult);
 }
