@@ -6,7 +6,6 @@ import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Index;
 import javax.persistence.Table;
 import java.util.Objects;
 
@@ -22,6 +21,20 @@ public class Wallet {
     private Integer usdBalance = 0;
     private Integer eurBalance = 0;
     private Integer gbpBalance = 0;
+
+    public Wallet(Integer userId) {
+        this.userId = userId;
+    }
+
+    public Wallet() {
+    }
+
+    public Wallet(Integer userId, Integer usdBalance, Integer eurBalance, Integer gbpBalance) {
+        this.userId = userId;
+        this.usdBalance = usdBalance;
+        this.eurBalance = eurBalance;
+        this.gbpBalance = gbpBalance;
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -1,36 +1,121 @@
 package rdublin.wallet.server.services;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Transactional;
+import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
+import rdublin.wallet.server.TestBase;
+import rdublin.wallet.server.domain.Wallet;
 import rdublin.wallet.server.repository.WalletRepository;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-class WalletServiceImplTest {
+import java.util.Map;
+import java.util.Optional;
 
-    @Autowired
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
+import static org.powermock.api.mockito.PowerMockito.*;
+import static rdublin.utils.CurrencyUtils.*;
+import static rdublin.wallet.server.TestBase.*;
+import static rdublin.wallet.server.services.WalletService.INSUFFICIENT_FUNDS_MESSAGE;
+import static rdublin.wallet.server.services.WalletService.OK_MESSAGE;
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({WalletServiceImpl.class})
+public class WalletServiceImplTest {
+
+    @Rule
+    public ErrorCollector collector = new ErrorCollector();
+    Wallet existingWallet;
     private WalletService walletService;
+    @Mock
+    private WalletRepository walletRepository;
+    private Wallet createdWallet;
 
-    @Test
-    //@Transactional
-    void withdraw() {
-        System.out.println("111");
-        walletService.withdraw(1, 100, "USD");
-        System.out.println("222");
-        walletService.withdraw(1, 100, "USD");
-        System.out.println("333");
+    @Before
+    public void setUp() throws Exception {
+        walletService = spy(new WalletServiceImpl());
+        Whitebox.setInternalState(walletService, "walletRepository", walletRepository);
+
+        existingWallet = new Wallet(USER_ID, TestBase.USD_AMOUNT, TestBase.EUR_AMOUNT, TestBase.GBP_AMOUNT);
+        createdWallet = new Wallet(ABSENT_USER_ID);
+        whenNew(Wallet.class).withArguments(ABSENT_USER_ID).thenReturn(createdWallet);
+
+        when(walletRepository.findById(any(Integer.class))).thenReturn(Optional.empty());
+        when(walletRepository.findById(USER_ID)).thenReturn(Optional.of(existingWallet));
     }
 
     @Test
-    void deposit() {
+    public void whenWithdrawAvailableFundsFromExistingWallet_thenMessageOk() {
+        collector.checkThat(walletService.withdraw(USER_ID, 50, USD_CODE), equalTo(OK_MESSAGE));
+        collector.checkThat(walletService.withdraw(USER_ID, 50, EUR_CODE), equalTo(OK_MESSAGE));
+        collector.checkThat(walletService.withdraw(USER_ID, 50, GBP_CODE), equalTo(OK_MESSAGE));
+
+        verify(walletRepository, times(3)).findById(USER_ID);
+        verify(walletRepository, times(3)).save(existingWallet);
     }
 
     @Test
-    void balance() {
+    public void whenWithdrawFromNotExistingWallet_thenMessageInsufficientFunds() {
+        collector.checkThat(walletService.withdraw(ABSENT_USER_ID, 1, USD_CODE), equalTo(INSUFFICIENT_FUNDS_MESSAGE));
+        collector.checkThat(walletService.withdraw(ABSENT_USER_ID, 1, EUR_CODE), equalTo(INSUFFICIENT_FUNDS_MESSAGE));
+        collector.checkThat(walletService.withdraw(ABSENT_USER_ID, 1, GBP_CODE), equalTo(INSUFFICIENT_FUNDS_MESSAGE));
+
+        verify(walletRepository, times(3)).findById(ABSENT_USER_ID);
+    }
+
+    @Test
+    public void whenWithdrawTooMuchFromExistingWallet_thenMessageInsufficientFunds() {
+        collector.checkThat(walletService.withdraw(USER_ID, 5000, USD_CODE), equalTo(INSUFFICIENT_FUNDS_MESSAGE));
+        collector.checkThat(walletService.withdraw(USER_ID, 5000, EUR_CODE), equalTo(INSUFFICIENT_FUNDS_MESSAGE));
+        collector.checkThat(walletService.withdraw(USER_ID, 5000, GBP_CODE), equalTo(INSUFFICIENT_FUNDS_MESSAGE));
+    }
+
+    @Test
+    public void whenDepositFundsOnExistingWallet_thenMessageOk() {
+        collector.checkThat(walletService.deposit(USER_ID, 50, USD_CODE), equalTo(OK_MESSAGE));
+        collector.checkThat(walletService.deposit(USER_ID, 50, EUR_CODE), equalTo(OK_MESSAGE));
+        collector.checkThat(walletService.deposit(USER_ID, 50, GBP_CODE), equalTo(OK_MESSAGE));
+
+        verify(walletRepository, times(3)).findById(USER_ID);
+        verify(walletRepository, times(3)).save(existingWallet);
+    }
+
+    @Test
+    public void whenDepositFundsOnNotExistingWallet_thenMessageOk() throws Exception {
+        collector.checkThat(walletService.deposit(ABSENT_USER_ID, 50, USD_CODE), equalTo(OK_MESSAGE));
+        collector.checkThat(walletService.deposit(ABSENT_USER_ID, 50, EUR_CODE), equalTo(OK_MESSAGE));
+        collector.checkThat(walletService.deposit(ABSENT_USER_ID, 50, GBP_CODE), equalTo(OK_MESSAGE));
+
+        verify(walletRepository, times(3)).findById(ABSENT_USER_ID);
+        verifyNew(Wallet.class, times(3)).withArguments(ABSENT_USER_ID);
+    }
+
+    @Test
+    public void whenAskBalanceOfExistingWallet_thenGetActualBalance() {
+
+        Map<String, Integer> balances = walletService.balance(USER_ID);
+        collector.checkThat(balances.getOrDefault(USD_CODE, -1), equalTo(USD_AMOUNT));
+        collector.checkThat(balances.getOrDefault(EUR_CODE, -1), equalTo(EUR_AMOUNT));
+        collector.checkThat(balances.getOrDefault(GBP_CODE, -1), equalTo(GBP_AMOUNT));
+
+        verify(walletRepository, times(1)).findById(USER_ID);
+    }
+
+    @Test
+    public void whenAskBalanceOfNotExistingWallet_thenGetZeroBalance() {
+        Map<String, Integer> balances = walletService.balance(ABSENT_USER_ID);
+        collector.checkThat(balances.getOrDefault(USD_CODE, -1), equalTo(0));
+        collector.checkThat(balances.getOrDefault(EUR_CODE, -1), equalTo(0));
+        collector.checkThat(balances.getOrDefault(GBP_CODE, -1), equalTo(0));
+
+        verify(walletRepository, times(1)).findById(ABSENT_USER_ID);
     }
 }

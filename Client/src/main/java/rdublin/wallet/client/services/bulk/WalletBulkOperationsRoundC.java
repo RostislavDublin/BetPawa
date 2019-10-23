@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import static rdublin.wallet.client.services.WalletClientShellComponent.USD;
+import static rdublin.utils.CurrencyUtils.USD;
 
 public class WalletBulkOperationsRoundC implements WalletBulkOperationsRound {
     @Override

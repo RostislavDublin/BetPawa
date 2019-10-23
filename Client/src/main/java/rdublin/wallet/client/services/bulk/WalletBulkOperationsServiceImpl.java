@@ -14,6 +14,8 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
+import static rdublin.utils.MetricsUtils.getDuration;
+
 @Service
 @Scope("singleton")
 public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsService {
@@ -27,10 +29,6 @@ public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsServ
     private ApplicationContext context;
     @Autowired
     private WalletClientService walletClientService;
-
-    private static long getDuration(long start) {
-        return System.currentTimeMillis() - start;
-    }
 
     public List<CompletableFuture<String>> runOperationsBatch(int users, int threadsPerUser, int roundsPerThread) {
         long start = System.currentTimeMillis();

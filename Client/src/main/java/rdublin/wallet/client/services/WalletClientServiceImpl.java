@@ -18,6 +18,9 @@ import javax.validation.constraints.NotNull;
 import java.util.Currency;
 import java.util.Map;
 
+import static rdublin.utils.CurrencyUtils.*;
+import static rdublin.utils.MetricsUtils.getDuration;
+
 @Component
 public class WalletClientServiceImpl implements WalletClientService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletClientServiceImpl.class);
@@ -78,15 +81,11 @@ public class WalletClientServiceImpl implements WalletClientService {
         WalletBalanceResult balances = walletServiceBlockingStub.balance(walletBalanceRequest);
 
         LOGGER.debug("\nResponded BALANCE in {}ms: USD{}, EUR{}, GBP{}", getDuration(start),
-                balances.getAmountsMap().get("USD"),
-                balances.getAmountsMap().get("EUR"),
-                balances.getAmountsMap().get("GBP"));
+                balances.getAmountsMap().get(USD_CODE),
+                balances.getAmountsMap().get(EUR_CODE),
+                balances.getAmountsMap().get(GBP_CODE));
 
         return balances.getAmountsMap();
-    }
-
-    private static long getDuration(long start) {
-        return System.currentTimeMillis() - start;
     }
 
 }

@@ -4,43 +4,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import rdublin.utils.CurrencyUtils;
 import rdublin.wallet.server.domain.Wallet;
 import rdublin.wallet.server.repository.WalletRepository;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class WalletServiceImpl implements WalletService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WalletServiceImpl.class);
-    public static final String OK_MESSAGE = "OK";
-    public static final String INSUFFICIENT_FUNDS_MESSAGE = "Insufficient funds";
-    public static final String UNKNOWN_CURRENCY_MESSAGE = "Unknown currency";
-    public static final String UNKNOWN_ERROR_MESSAGE = "Unknown error";
     public static final Map<String, Integer> BALANCE_MAP_TEMPLATE;
-    private static final Set<String> KNOWN_CURRENCY_CODES;
+    private static final Logger LOGGER = LoggerFactory.getLogger(WalletServiceImpl.class);
 
     static {
-        KNOWN_CURRENCY_CODES = new HashSet(Arrays.asList("USD", "EUR", "GBP"));
-
-        Map<String, Integer> map = KNOWN_CURRENCY_CODES.stream().collect(Collectors.toMap(k -> k, k -> 0));
+        Map<String, Integer> map =
+                CurrencyUtils.KNOWN_CURRENCY_CODES.stream().collect(Collectors.toMap(k -> k, k -> 0));
         BALANCE_MAP_TEMPLATE = Collections.unmodifiableMap(map);
     }
+
     @Autowired
     private WalletRepository walletRepository;
-
 
     @Override
     public String withdraw(int userId, int amount, String currencyCode) {
 
-        if (!KNOWN_CURRENCY_CODES.contains(currencyCode)) {
+        if (!CurrencyUtils.KNOWN_CURRENCY_CODES.contains(currencyCode)) {
             return UNKNOWN_CURRENCY_MESSAGE;
         }
         Optional<Wallet> walletIfPresent = walletRepository.findById(userId);
@@ -64,14 +56,13 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public String deposit(int userId, int amount, String currencyCode) {
 
-        if (!KNOWN_CURRENCY_CODES.contains(currencyCode)) {
+        if (!CurrencyUtils.KNOWN_CURRENCY_CODES.contains(currencyCode)) {
             return UNKNOWN_CURRENCY_MESSAGE;
         }
         Optional<Wallet> walletIfPresent = walletRepository.findById(userId);
         Wallet wallet;
         if (!walletIfPresent.isPresent()) {
-            wallet = new Wallet();
-            wallet.setUserId(userId);
+            wallet = new Wallet(userId);
             setBalance(wallet, amount, currencyCode);
         } else {
             wallet = walletIfPresent.get();
@@ -124,6 +115,5 @@ public class WalletServiceImpl implements WalletService {
                 break;
         }
     }
-
 
 }

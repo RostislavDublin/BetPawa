@@ -12,6 +12,8 @@ import rdublin.wallet.grpc.WalletOperationResult;
 import rdublin.wallet.grpc.WalletOperationWithdraw;
 import rdublin.wallet.grpc.WalletServiceGrpc;
 
+import static rdublin.utils.CurrencyUtils.*;
+import static rdublin.utils.MetricsUtils.getDuration;
 import static rdublin.wallet.server.services.WalletServiceImpl.*;
 
 @GRpcService
@@ -36,10 +38,6 @@ public class WalletServerServiceImpl extends WalletServiceGrpc.WalletServiceImpl
 
     @Autowired
     private WalletService walletService;
-
-    private static long getDuration(long start) {
-        return System.currentTimeMillis() - start;
-    }
 
     @Override
     public void withdraw(WalletOperationWithdraw request,
@@ -82,9 +80,9 @@ public class WalletServerServiceImpl extends WalletServiceGrpc.WalletServiceImpl
         responseObserver.onCompleted();
 
         LOGGER.debug("\nResponding BALANCE in {}ms: USD{}, EUR{}, GBP{}", getDuration(start),
-                balances.getAmountsMap().get("USD"),
-                balances.getAmountsMap().get("EUR"),
-                balances.getAmountsMap().get("GBP"));
+                balances.getAmountsMap().get(USD_CODE),
+                balances.getAmountsMap().get(EUR_CODE),
+                balances.getAmountsMap().get(GBP_CODE));
     }
 
     private WalletOperationResult getResultByResultMessage(String resultMessage) {
