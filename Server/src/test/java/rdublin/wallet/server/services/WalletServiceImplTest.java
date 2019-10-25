@@ -18,37 +18,32 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.powermock.api.mockito.PowerMockito.*;
 import static rdublin.utils.CurrencyUtils.*;
-import static rdublin.wallet.server.TestBase.*;
 import static rdublin.wallet.server.services.WalletService.INSUFFICIENT_FUNDS_MESSAGE;
 import static rdublin.wallet.server.services.WalletService.OK_MESSAGE;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({WalletServiceImpl.class})
-public class WalletServiceImplTest {
+public class WalletServiceImplTest extends TestBase {
 
-    @Rule
-    public ErrorCollector collector = new ErrorCollector();
-    Wallet existingWallet;
     private WalletService walletService;
     @Mock
     private WalletRepository walletRepository;
-    private Wallet createdWallet;
 
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         walletService = spy(new WalletServiceImpl());
         Whitebox.setInternalState(walletService, "walletRepository", walletRepository);
 
-        existingWallet = new Wallet(USER_ID, TestBase.USD_AMOUNT, TestBase.EUR_AMOUNT, TestBase.GBP_AMOUNT);
-        createdWallet = new Wallet(ABSENT_USER_ID);
         whenNew(Wallet.class).withArguments(ABSENT_USER_ID).thenReturn(createdWallet);
 
-        when(walletRepository.findById(any(Integer.class))).thenReturn(Optional.empty());
+        when(walletRepository.findById(anyInt())).thenReturn(Optional.empty());
         when(walletRepository.findById(USER_ID)).thenReturn(Optional.of(existingWallet));
     }
 

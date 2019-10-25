@@ -89,7 +89,7 @@ public class WalletServiceImpl implements WalletService {
         }
     }
 
-    private Integer getBalance(Wallet wallet, String currencyCode) {
+    private int getBalance(Wallet wallet, String currencyCode) {
         switch (currencyCode) {
             case "USD":
                 return wallet.getUsdBalance();

@@ -1,0 +1,24 @@
+version: '3'
+services:
+  wallet-server:
+    container_name: wallet-server
+    image: rdublin/wallet/wallet-server:1.0-SNAPSHOT
+    restart: always
+    ports:
+      - "6565:6565"
+    depends_on:
+      - wallet-mysql
+    environment:
+      MYSQL_HOST: "wallet-mysql"
+
+  wallet-mysql:
+    container_name: wallet-mysql
+    image: mysql/mysql-server:5.7
+    environment:
+      MYSQL_DATABASE: wallet
+      MYSQL_ROOT_PASSWORD: 123456Qw
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3307:3306"
+    restart: always
+

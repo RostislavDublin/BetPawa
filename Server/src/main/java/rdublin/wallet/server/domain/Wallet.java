@@ -16,20 +16,20 @@ import java.util.Objects;
 public class Wallet {
     @Id
     @Column(nullable = false, unique = true)
-    private Integer userId;
+    private int userId;
     @Column(nullable = false)
-    private Integer usdBalance = 0;
-    private Integer eurBalance = 0;
-    private Integer gbpBalance = 0;
+    private int usdBalance = 0;
+    private int eurBalance = 0;
+    private int gbpBalance = 0;
 
-    public Wallet(Integer userId) {
+    public Wallet(int userId) {
         this.userId = userId;
     }
 
     public Wallet() {
     }
 
-    public Wallet(Integer userId, Integer usdBalance, Integer eurBalance, Integer gbpBalance) {
+    public Wallet(int userId, int usdBalance, int eurBalance, int gbpBalance) {
         this.userId = userId;
         this.usdBalance = usdBalance;
         this.eurBalance = eurBalance;
@@ -41,38 +41,38 @@ public class Wallet {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Wallet wallet = (Wallet) o;
-        return userId.equals(wallet.userId);
+        return userId == wallet.userId;
     }
 
-    public Integer getUserId() {
+    public int getUserId() {
         return userId;
     }
 
-    public void setUserId(Integer userId) {
+    public void setUserId(int userId) {
         this.userId = userId;
     }
 
-    public Integer getUsdBalance() {
+    public int getUsdBalance() {
         return usdBalance;
     }
 
-    public void setUsdBalance(Integer usdBalance) {
+    public void setUsdBalance(int usdBalance) {
         this.usdBalance = usdBalance;
     }
 
-    public Integer getEurBalance() {
+    public int getEurBalance() {
         return eurBalance;
     }
 
-    public void setEurBalance(Integer eurBalance) {
+    public void setEurBalance(int eurBalance) {
         this.eurBalance = eurBalance;
     }
 
-    public Integer getGbpBalance() {
+    public int getGbpBalance() {
         return gbpBalance;
     }
 
-    public void setGbpBalance(Integer gbpBalance) {
+    public void setGbpBalance(int gbpBalance) {
         this.gbpBalance = gbpBalance;
     }
 

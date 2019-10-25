@@ -7,3 +7,5 @@
 /Grpc/build/
 /Grpc/out/production/classes/rdublin/wallet/grpc/
 /Server/out/production/
+/Server/out/test/classes/
+/spring-shell.log

@@ -1,7 +1,18 @@
-plugins{
+plugins {
     id 'org.springframework.boot' version '2.2.0.RELEASE'
     id 'io.spring.dependency-management' version "1.0.8.RELEASE"
+    id 'com.bmuschko.docker-remote-api' version '5.2.0'
+    id 'com.avast.gradle.docker-compose' version '0.9.5'
 }
+
+import com.bmuschko.gradle.docker.tasks.container.DockerCreateContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerStartContainer
+import com.bmuschko.gradle.docker.tasks.container.DockerStopContainer
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerRemoveImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
 dependencies {
     implementation project(':Grpc')
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
@@ -15,3 +26,87 @@ dependencies {
     testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
     testImplementation group: 'com.h2database', name: 'h2', version: '1.4.194'
 }
+
+tasks.findAll({t -> t.name.startsWith("compose")}).each { t -> t.group = "dockerCompose" }
+dockerCompose {
+    useComposeFiles = ['src/main/resources/docker-compose.yml'/*, 'docker-compose.prod.yml'*/]
+}
+
+
+def dockerBuildDir = 'build/docker/'
+def imageVersion = jar.archiveVersion.get()
+def imageId = "rdublin/wallet/wallet-server:$imageVersion"
+def uniqueContainerName = 'wallet-server'
+
+task createDockerfile(type: Dockerfile, group: 'docker') {
+    destFile = project.file("$dockerBuildDir/Dockerfile")
+    from 'openjdk:8-jre-alpine'
+    instruction('LABEL maintainer="Rostislav Dublin<crm_guru@mail.ru>"')
+    copyFile jar.archiveFileName.get(), '/app/walletServer.jar'
+    entryPoint 'java'
+    defaultCommand '-jar', '/app/walletServer.jar'
+    exposePort 6565
+    //runCommand 'apk --update --no-cache add curl'
+    //instruction 'HEALTHCHECK CMD curl -f http://localhost:6565/health || exit 1'
+}
+
+task syncJar(type: Sync, group: 'docker') {
+    dependsOn assemble
+    from jar.archiveFile.get().asFile.getParent()
+    into dockerBuildDir
+    preserve { include 'Dockerfile' }
+}
+
+task buildImage(type: DockerBuildImage, group: 'docker') {
+    dependsOn createDockerfile, syncJar
+    inputDir = project.file(dockerBuildDir)
+    tags = [imageId]
+}
+
+task stopContainer(type: DockerStopContainer, group: 'docker') {
+    targetContainerId("$uniqueContainerName")
+    onError { exc ->
+        if (exc.message != null && !exc.class.name.contains('NotFoundException')) {
+            throw new RuntimeException(exc)
+        } else {
+            println ". " + exc.message;
+        }
+    }
+}
+
+task removeContainer(type: DockerRemoveContainer, group: 'docker') {
+    dependsOn stopContainer
+    targetContainerId("$uniqueContainerName")
+    onError { exc ->
+        if (exc.message != null && !exc.class.name.contains('NotFoundException')) {
+            throw new RuntimeException(exc)
+        } else {
+            println ". " + exc.message;
+        }
+    }
+}
+
+task createContainer(type: DockerCreateContainer, group: 'docker') {
+    dependsOn buildImage, removeContainer
+    targetImageId imageId
+    containerName = "$uniqueContainerName"
+    portBindings = ['6565:6565']
+}
+
+task startContainer(type: DockerStartContainer, group: 'docker') {
+    dependsOn createContainer
+    targetContainerId("$uniqueContainerName")
+}
+
+task removeImage(type: DockerRemoveImage, group: 'docker') {
+    dependsOn removeContainer
+    targetImageId imageId
+    onError { exc ->
+        if (exc.message != null && !exc.class.name.contains('NotFoundException')) {
+            throw new RuntimeException(exc)
+        } else {
+            println ". " + exc.message;
+        }
+    }
+}
+

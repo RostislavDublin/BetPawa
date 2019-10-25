@@ -11,10 +11,8 @@ import rdublin.wallet.client.services.bulk.WalletBulkOperationsService;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
-import java.util.ArrayList;
 import java.util.Currency;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 @ShellComponent
@@ -89,38 +87,11 @@ public class WalletClientShellComponent {
 
     @ShellMethod(value = "Run the batch after all parameters customization", group = "2. Wallet workload execution")
     public void runPrepared() {
-        List<CompletableFuture<String>> roundSets
-                = walletBulkOperationsService.runOperationsBatch(users, threadsPerUser, roundsPerThread);
-        List<CompletableFuture<String>> newCompletedRoundSets;
-        long start = System.currentTimeMillis(), startCycle, cycleDuration = 0, totalDuration = 0,
-                totalRoundSets = roundSets.size(), completedRoundSets = 0;
-        while (!roundSets.isEmpty()) {
-            if (cycleDuration < 10000) {
-                try {
-                    Thread.sleep(10000 - cycleDuration);
-                } catch (InterruptedException e) {
-                    //e.printStackTrace();
-                }
-            }
-            startCycle = System.currentTimeMillis();
-            newCompletedRoundSets = new ArrayList<>();
-            for (CompletableFuture<String> roundSet : roundSets) {
-                if (roundSet.isDone()) {
-                    newCompletedRoundSets.add(roundSet);
-                }
-            }
-            completedRoundSets += newCompletedRoundSets.size();
-            roundSets.removeAll(newCompletedRoundSets);
-            totalDuration = getDuration(start);
-            LOGGER.info("\nBATCH: {} of {} roundsets completed in {}ms, avg: {}/s",
-                    completedRoundSets, totalRoundSets, getDuration(start),
-                    (completedRoundSets * 1000 / totalDuration));
-            cycleDuration = getDuration(startCycle);
+        try {
+            walletBulkOperationsService.performOperationsBatch(users, threadsPerUser, roundsPerThread).get();
+        } catch (InterruptedException | ExecutionException e) {
+            LOGGER.error(e.getLocalizedMessage());
         }
-        totalDuration = getDuration(start);
-        LOGGER.info("\nBATCH: all {} roundsets completed in {}ms, avg: {}/s",
-                totalRoundSets, totalDuration,
-                (totalRoundSets * 1000 / totalDuration));
     }
 
     @ShellMethod(value = "Run single withdraw for user and amount", group = "3. Single wallet operations")
