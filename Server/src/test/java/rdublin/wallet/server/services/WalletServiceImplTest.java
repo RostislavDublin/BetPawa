@@ -1,15 +1,13 @@
 package rdublin.wallet.server.services;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
-import rdublin.wallet.server.TestBase;
+import rdublin.wallet.server.TestBaseServer;
 import rdublin.wallet.server.domain.Wallet;
 import rdublin.wallet.server.repository.WalletRepository;
 
@@ -17,8 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
@@ -29,7 +26,7 @@ import static rdublin.wallet.server.services.WalletService.OK_MESSAGE;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({WalletServiceImpl.class})
-public class WalletServiceImplTest extends TestBase {
+public class WalletServiceImplTest extends TestBaseServer {
 
     private WalletService walletService;
     @Mock
@@ -74,13 +71,14 @@ public class WalletServiceImplTest extends TestBase {
     }
 
     @Test
-    public void whenDepositFundsOnExistingWallet_thenMessageOk() {
+    public void whenDepositFundsOnExistingWallet_thenMessageOk() throws Exception {
         collector.checkThat(walletService.deposit(USER_ID, 50, USD_CODE), equalTo(OK_MESSAGE));
         collector.checkThat(walletService.deposit(USER_ID, 50, EUR_CODE), equalTo(OK_MESSAGE));
         collector.checkThat(walletService.deposit(USER_ID, 50, GBP_CODE), equalTo(OK_MESSAGE));
 
         verify(walletRepository, times(3)).findById(USER_ID);
-        verify(walletRepository, times(3)).save(existingWallet);
+        verifyPrivate(walletService, times(3))
+                .invoke("setBalance", eq(existingWallet), anyInt(), anyString());
     }
 
     @Test

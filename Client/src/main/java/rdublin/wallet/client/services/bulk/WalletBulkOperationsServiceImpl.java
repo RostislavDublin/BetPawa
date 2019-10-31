@@ -50,7 +50,7 @@ public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsServ
                 while (completedRoundSets.longValue() < totalRoundSets &&
                         getDuration(startCycle) < INTERMEDIATE_REPORT_PERIOD) {
                     try {
-                        completedRoundSets.wait();
+                        completedRoundSets.wait(INTERMEDIATE_REPORT_PERIOD * 2);
                     } catch (InterruptedException e) {
                         //e.printStackTrace();
                     }
