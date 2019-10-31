@@ -7,6 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Version;
 import java.util.Objects;
 
 @Entity
@@ -21,6 +22,8 @@ public class Wallet {
     private int usdBalance = 0;
     private int eurBalance = 0;
     private int gbpBalance = 0;
+    @Version
+    private int version;
 
     public Wallet(int userId) {
         this.userId = userId;
@@ -79,5 +82,10 @@ public class Wallet {
     @Override
     public int hashCode() {
         return Objects.hash(userId);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Wallet of user %d: USD%d, EUR%d, GBP%d", userId, usdBalance, eurBalance, gbpBalance);
     }
 }

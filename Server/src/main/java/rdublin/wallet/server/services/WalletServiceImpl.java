@@ -3,6 +3,10 @@ package rdublin.wallet.server.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import rdublin.utils.CurrencyUtils;
 import rdublin.wallet.server.domain.Wallet;
@@ -30,6 +34,8 @@ public class WalletServiceImpl implements WalletService {
     private WalletRepository walletRepository;
 
     @Override
+    @Retryable(include = {ObjectOptimisticLockingFailureException.class},
+            maxAttempts = 100, backoff = @Backoff(random = true, delay = 100, maxDelay = 10000L, multiplier = 10))
     public String withdraw(int userId, int amount, String currencyCode) {
 
         if (!CurrencyUtils.KNOWN_CURRENCY_CODES.contains(currencyCode)) {
@@ -54,21 +60,31 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
+    @Retryable(
+            include = {DataIntegrityViolationException.class, ObjectOptimisticLockingFailureException.class},
+            maxAttempts = 100, backoff = @Backoff(random = true, delay = 100, maxDelay = 10000L, multiplier = 10))
     public String deposit(int userId, int amount, String currencyCode) {
-
+        LOGGER.debug("User {} DEPOSIT {}{} - starting", userId, currencyCode, amount);
         if (!CurrencyUtils.KNOWN_CURRENCY_CODES.contains(currencyCode)) {
             return UNKNOWN_CURRENCY_MESSAGE;
         }
         Optional<Wallet> walletIfPresent = walletRepository.findById(userId);
         Wallet wallet;
         if (!walletIfPresent.isPresent()) {
+            LOGGER.debug("User {} DEPOSIT {}{} - no wallet, create", userId, currencyCode, amount);
             wallet = new Wallet(userId);
             setBalance(wallet, amount, currencyCode);
+            walletRepository.persist(wallet);
         } else {
             wallet = walletIfPresent.get();
-            setBalance(wallet, getBalance(wallet, currencyCode) + amount, currencyCode);
+            int currentBalance = getBalance(wallet, currencyCode);
+            LOGGER.debug("User {} DEPOSIT {}{} - has wallet with {}, add",
+                    userId, currencyCode, amount, currentBalance);
+
+            setBalance(wallet, currentBalance + amount, currencyCode);
+            //managed! walletRepository.save(wallet);
         }
-        walletRepository.save(wallet);
+
         return OK_MESSAGE;
     }
 

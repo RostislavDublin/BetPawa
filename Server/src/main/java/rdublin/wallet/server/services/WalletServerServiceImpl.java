@@ -21,9 +21,9 @@ public class WalletServerServiceImpl extends WalletServiceGrpc.WalletServiceImpl
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletServerServiceImpl.class);
     public static final WalletOperationResult OK_WALLET_OPERATION_RESULT;
-    private static final WalletOperationResult INSUFFICIENT_FUNDS_WALLET_OPERATION_RESULT;
-    private static final WalletOperationResult UNKNOWN_CURRENCY_WALLET_OPERATION_RESULT;
-    private static final WalletOperationResult UNKNOWN_ERROR_WALLET_OPERATION_RESULT;
+    public static final WalletOperationResult INSUFFICIENT_FUNDS_WALLET_OPERATION_RESULT;
+    public static final WalletOperationResult UNKNOWN_CURRENCY_WALLET_OPERATION_RESULT;
+    public static final WalletOperationResult UNKNOWN_ERROR_WALLET_OPERATION_RESULT;
 
     static {
         OK_WALLET_OPERATION_RESULT =

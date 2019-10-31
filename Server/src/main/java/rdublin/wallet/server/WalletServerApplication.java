@@ -9,11 +9,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.retry.annotation.EnableRetry;
 
 import javax.sql.DataSource;
 
 @SpringBootApplication
 @EnableCaching
+@EnableRetry
 public class WalletServerApplication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletServerApplication.class);

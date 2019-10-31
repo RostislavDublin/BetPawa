@@ -9,3 +9,6 @@
 /Server/out/production/
 /Server/out/test/classes/
 /spring-shell.log
+/Docker/build/
+/Client/out/test/classes/rdublin/wallet/client/
+/out/
