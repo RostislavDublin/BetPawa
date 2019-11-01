@@ -4,6 +4,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rdublin.wallet.grpc.WalletBalance;
 import rdublin.wallet.grpc.WalletBalanceResult;
@@ -17,6 +18,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.Currency;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static rdublin.utils.CurrencyUtils.*;
 import static rdublin.utils.MetricsUtils.getDuration;
@@ -24,13 +26,18 @@ import static rdublin.utils.MetricsUtils.getDuration;
 @Component
 public class WalletClientServiceImpl implements WalletClientService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletClientServiceImpl.class);
-
+    private final long OPERATION_TIMEOUT = 30_000;
     private WalletServiceGrpc.WalletServiceBlockingStub walletServiceBlockingStub;
+
+    @Value("${wallet.server.address}")
+    private String walletServerAddress;
+    @Value("${wallet.server.port}")
+    private int walletServerPort;
 
     @PostConstruct
     private void init() {
         ManagedChannel managedChannel = ManagedChannelBuilder
-                .forAddress("localhost", 6565).usePlaintext().build();
+                .forAddress(walletServerAddress, walletServerPort).usePlaintext().build();
 
         walletServiceBlockingStub = WalletServiceGrpc.newBlockingStub(managedChannel);
     }
@@ -47,7 +54,10 @@ public class WalletClientServiceImpl implements WalletClientService {
                                         .setCurrency(currency.getCurrencyCode())
                                         .build();
 
-        WalletOperationResult walletOperationResult = walletServiceBlockingStub.deposit(walletOperationDeposit);
+        WalletOperationResult walletOperationResult = walletServiceBlockingStub
+                .withDeadlineAfter(OPERATION_TIMEOUT, TimeUnit.MILLISECONDS)
+                .deposit(walletOperationDeposit);
+
         LOGGER.debug("\nResponded on DEPOSIT in {}ms: {}", getDuration(start), walletOperationResult.getMessage());
 
         return walletOperationResult.getMessage();
@@ -65,7 +75,10 @@ public class WalletClientServiceImpl implements WalletClientService {
                                          .setCurrency(currency.getCurrencyCode())
                                          .build();
 
-        WalletOperationResult walletOperationResult = walletServiceBlockingStub.withdraw(walletOperationWithdraw);
+        WalletOperationResult walletOperationResult = walletServiceBlockingStub
+                .withDeadlineAfter(OPERATION_TIMEOUT, TimeUnit.MILLISECONDS)
+                .withdraw(walletOperationWithdraw);
+
         LOGGER.debug("\nResponded on WITHDRAW in {}ms: {}", getDuration(start), walletOperationResult.getMessage());
 
         return walletOperationResult.getMessage();
@@ -78,7 +91,9 @@ public class WalletClientServiceImpl implements WalletClientService {
         LOGGER.debug("\nRequesting BALANCE for user {}", userId);
         WalletBalance walletBalanceRequest = WalletBalance.newBuilder().setUserId(userId).build();
 
-        WalletBalanceResult balances = walletServiceBlockingStub.balance(walletBalanceRequest);
+        WalletBalanceResult balances = walletServiceBlockingStub
+                .withDeadlineAfter(OPERATION_TIMEOUT, TimeUnit.MILLISECONDS)
+                .balance(walletBalanceRequest);
 
         LOGGER.debug("\nResponded BALANCE in {}ms: USD{}, EUR{}, GBP{}", getDuration(start),
                 balances.getAmountsMap().get(USD_CODE),
@@ -87,5 +102,4 @@ public class WalletClientServiceImpl implements WalletClientService {
 
         return balances.getAmountsMap();
     }
-
 }

@@ -1,5 +1,6 @@
 package rdublin.wallet.client.services;
 
+import io.grpc.Deadline;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +15,8 @@ import rdublin.wallet.grpc.WalletOperationDeposit;
 import rdublin.wallet.grpc.WalletOperationResult;
 import rdublin.wallet.grpc.WalletOperationWithdraw;
 import rdublin.wallet.grpc.WalletServiceGrpc;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,7 +41,8 @@ public class WalletClientServiceImplTest extends TestBaseClient {
 
         walletOperationResult = WalletOperationResult.newBuilder().setMessage(OK_MESSAGE).build();
         walletBalanceResult = WalletBalanceResult.newBuilder().putAllAmounts(TEST_BALANCE_MAP).build();
-
+        when(walletServiceBlockingStub.withDeadlineAfter(anyLong(), any(TimeUnit.class)))
+                .thenReturn(walletServiceBlockingStub);
         when(walletServiceBlockingStub.deposit(any())).thenReturn(walletOperationResult);
         when(walletServiceBlockingStub.withdraw(any())).thenReturn(walletOperationResult);
         when(walletServiceBlockingStub.balance(any())).thenReturn(walletBalanceResult);

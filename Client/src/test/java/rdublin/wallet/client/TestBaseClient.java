@@ -19,8 +19,13 @@ public class TestBaseClient {
     public static final int GBP_AMOUNT = 333;
 
     public static final String OK_MESSAGE = "OK";
+    protected static final int ROUNDS_PER_THREAD = 7;
+    protected static final int THREADS_PER_USER = 8;
+    protected static final int USERS = 9;
+    protected static final Integer OPERATIONS_NUMBER = 5;
 
     protected static Map<String, Integer> TEST_BALANCE_MAP;
+    protected final String BATCH_COMPLETED = "Batch Completed";
     @Rule
     public ErrorCollector collector = new ErrorCollector();
 

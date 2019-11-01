@@ -14,7 +14,7 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 
 tasks.findAll({ t -> t.name.startsWith("compose") }).each { t -> t.group = "docker-compose" }
 dockerCompose {
-    useComposeFiles = ['docker-compose.yml'/*, 'docker-compose.prod.yml'*/]
+    useComposeFiles = ['docker-compose.yml']
 }
 
 def dockerBuildDir = 'build/'
@@ -27,27 +27,24 @@ def createDockerTasks(String moduleName, String dockerBuildDir) {
     String uniqueContainerName = "wallet-${moduleName.toLowerCase()}"
 
     Task createDockerFile = tasks.create("create${moduleName}Dockerfile", Dockerfile) {
-        destFile = project.file(dockerBuildDir + "/${moduleName}Dockerfile")
+        destFile = project.file(dockerBuildDir + "/${moduleName}/Dockerfile")
         from 'openjdk:8-jre-alpine'
         instruction('LABEL maintainer="Rostislav Dublin<crm_guru@mail.ru>"')
         copyFile "${archiveFile.getAbsoluteFile().name}", "/app/wallet${moduleName}.jar"
         entryPoint 'java'
         defaultCommand '-jar', "/app/wallet${moduleName}.jar"
-        //exposePort 6565
-        //runCommand 'apk --update --no-cache add curl'
-        //instruction 'HEALTHCHECK CMD curl -f http://localhost:6565/health || exit 1'
     }.group('docker-image')
 
     Task syncJar = tasks.create("sync${moduleName}Jar", Copy) {
         dependsOn ":${moduleName}:assemble"
         from archiveFile
-        into dockerBuildDir
+        into "$dockerBuildDir/${moduleName}"
     }.group('docker-container')
 
     Task buildImage = tasks.create("build${moduleName}Image", DockerBuildImage) {
         dependsOn "create${moduleName}Dockerfile", "sync${moduleName}Jar"
-        inputDir = project.file(dockerBuildDir)
-        dockerFile = project.file(dockerBuildDir + "${moduleName}Dockerfile")
+        inputDir = project.file("$dockerBuildDir/$moduleName")
+        dockerFile = project.file("$dockerBuildDir/$moduleName/Dockerfile")
         tags = [imageId]
     }.group('docker-image')
 
@@ -95,16 +92,4 @@ def createDockerTasks(String moduleName, String dockerBuildDir) {
 
 createDockerTasks('Server', dockerBuildDir)
 createDockerTasks('Client', dockerBuildDir)
-
-//task removeImage(type: DockerRemoveImage, group: 'docker-image') {
-//    dependsOn removeContainer
-//    targetImageId imageId
-//    onError { exc ->
-//        if (exc.message != null && !exc.class.name.contains('NotFoundException')) {
-//            throw new RuntimeException(exc)
-//        } else {
-//            println ". " + exc.message;
-//        }
-//    }
-//}
 

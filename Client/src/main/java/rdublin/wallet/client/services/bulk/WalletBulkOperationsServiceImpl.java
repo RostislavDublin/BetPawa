@@ -31,6 +31,8 @@ public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsServ
     AtomicInteger completedRoundSets = new AtomicInteger(0);
     AtomicInteger completedOperations = new AtomicInteger(0);
 
+    boolean doIt = true;
+
     @Autowired
     private ApplicationContext context;
     @Autowired
@@ -38,6 +40,7 @@ public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsServ
 
     @Override
     public CompletableFuture<String> performOperationsBatch(int users, int threadsPerUser, int roundsPerThread) {
+        doIt = true;
         completedRoundSets.set(0);
         completedOperations.set(0);
         List<CompletableFuture<OperationRoundSetResult>> roundSets =
@@ -45,7 +48,7 @@ public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsServ
 
         long startCycle, start = startCycle = System.currentTimeMillis(), totalDuration = 0,
                 totalRoundSets = roundSets.size();
-        while (true) {
+        while (doIt) {
             synchronized (completedRoundSets) {
                 while (completedRoundSets.longValue() < totalRoundSets &&
                         getDuration(startCycle) < INTERMEDIATE_REPORT_PERIOD) {
@@ -66,10 +69,14 @@ public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsServ
                 startCycle = System.currentTimeMillis();
             }
         }
-        totalDuration = getDuration(start);
-        LOGGER.info("\nBATCH: all {} operations in {} roundsets completed in {}ms, avg: {}ops/s",
-                completedOperations, totalRoundSets, totalDuration,
-                (completedOperations.intValue() * 1000 / totalDuration));
+        if (doIt) {
+            totalDuration = getDuration(start);
+            LOGGER.info("\nBATCH: all {} operations in {} roundsets completed in {}ms, avg: {}ops/s",
+                    completedOperations, totalRoundSets, totalDuration,
+                    (completedOperations.intValue() * 1000 / totalDuration));
+        } else {
+            LOGGER.error("\nBATCH: terminated due to above error");
+        }
         return CompletableFuture.completedFuture("Batch Completed");
     }
 
@@ -80,13 +87,15 @@ public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsServ
         //because @Async doesn't work with 'this'
         WalletBulkOperationsService self = context.getBean(WalletBulkOperationsService.class);
         List<CompletableFuture<OperationRoundSetResult>> roundSets = new ArrayList<>();
-        for (int i = 0; i < threadsPerUser; i++) {
-            for (int j = 1; j <= users; j++) {
+        for (int i = 0; doIt && (i < threadsPerUser); i++) {
+            for (int j = 1; doIt && (j <= users); j++) {
                 roundSets.add(self.runOperationsRoundSet(j, roundsPerThread));
             }
         }
-        LOGGER.info("\nBATCH: all {} roundsets queued in {}ms, waiting for completion",
-                roundSets.size(), getDuration(start));
+        if (doIt) {
+            LOGGER.info("\nBATCH: all {} roundsets queued in {}ms, waiting for completion",
+                    roundSets.size(), getDuration(start));
+        }
         return roundSets;
     }
 
@@ -95,12 +104,19 @@ public class WalletBulkOperationsServiceImpl implements WalletBulkOperationsServ
         LOGGER.debug("Run {} round(s) of bulk operations for user {}", roundsNumber, userId);
         OperationRoundSetResult result = new OperationRoundSetResult();
         WalletBulkOperationsRound round;
-        for (int i = 1; i <= roundsNumber; i++) {
+        for (int i = 1; doIt && (i <= roundsNumber); i++) {
             round = ROUNDS[random.nextInt(ROUNDS.length)];
             LOGGER.debug(". Run round {}'{}' of {} of bulk operations for user {}",
                     i, round.getCode(), roundsNumber, userId);
             for (BiFunction<WalletClientService, Integer, String> operation : round.operations()) {
-                operation.apply(walletClientService, userId);
+                if (!doIt) break;
+                try {
+                    operation.apply(walletClientService, userId);
+                } catch (Exception e) {
+                    LOGGER.error("\nOperation execution error: ({}) {}",
+                            e.getClass().getSimpleName(), e.getLocalizedMessage());
+                    doIt = false;
+                }
                 result.operationsNumber++;
             }
         }

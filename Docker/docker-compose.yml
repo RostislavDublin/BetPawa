@@ -22,3 +22,13 @@ services:
       - "3307:3306"
     restart: always
 
+  wallet-client:
+    container_name: wallet-client
+    image: rdublin/wallet/wallet-client:1.0-SNAPSHOT
+    environment:
+      WALLET_SERVER_ADDRESS: wallet-server
+    restart: always
+    stdin_open: true
+    tty: true
+    depends_on:
+      - wallet-server
