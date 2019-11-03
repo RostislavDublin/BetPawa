@@ -36,25 +36,25 @@ public class WalletClientShellComponent {
         return System.currentTimeMillis() - start;
     }
 
-    @ShellMethod(value = "Set the number of concurrent users emulated",
+    @ShellMethod(value = "Sets the number of concurrent users emulated",
             group = "1. Wallet operations batch setup")
     public void users(@Min(1) int number) {
         this.users = number;
     }
 
-    @ShellMethod(value = "Set the number of concurrent requests a user will make",
+    @ShellMethod(value = "Sets the number of concurrent requests a user will make",
             group = "1. Wallet operations batch setup")
     public void threadsPerUser(@Min(1) int number) {
         this.threadsPerUser = number;
     }
 
-    @ShellMethod(value = "Number of rounds each thread is executing",
+    @ShellMethod(value = "Sets the number of rounds each thread executes",
             group = "1. Wallet operations batch setup")
     public void roundsPerThread(@Min(1) int number) {
         this.roundsPerThread = number;
     }
 
-    @ShellMethod(value = "Configure Task Executor thread pool core and max size",
+    @ShellMethod(value = "Configures Task Executor thread pool core and max size",
             group = "1. Wallet operations batch setup")
     public void setupExecutor(@Min(1) int coreSize, @Min(1) int maxSize) {
         Stream.of((ThreadPoolTaskExecutor) walletOperationsTaskExecutor).forEach(e -> {
@@ -96,16 +96,16 @@ public class WalletClientShellComponent {
 
     @ShellMethod(value = "Run single withdraw for user and amount", group = "3. Single wallet operations")
     public void runWithdraw(@Min(1) int userId, @Min(1) int amount, @Size(min = 3, max = 3) String currencyCode) {
-        walletClientService.withdraw(userId, amount, Currency.getInstance(currencyCode));
+        LOGGER.info("\n{}", walletClientService.withdraw(userId, amount, Currency.getInstance(currencyCode)));
     }
 
     @ShellMethod(value = "Run single deposit for user and amount", group = "3. Single wallet operations")
     public void runDeposit(@Min(1) int userId, @Min(1) int amount, @Size(min = 3, max = 3) String currencyCode) {
-        walletClientService.deposit(userId, amount, Currency.getInstance(currencyCode));
+        LOGGER.info("\n{}", walletClientService.deposit(userId, amount, Currency.getInstance(currencyCode)));
     }
 
     @ShellMethod(value = "Run single balance request for user", group = "3. Single wallet operations")
     public void runBalance(@Min(1) int userId) {
-        walletClientService.balance(userId);
+        LOGGER.info("\nBalance: {}", walletClientService.balance(userId).toString());
     }
 }
