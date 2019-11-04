@@ -26,7 +26,7 @@ import static rdublin.utils.MetricsUtils.getDuration;
 @Component
 public class WalletClientServiceImpl implements WalletClientService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletClientServiceImpl.class);
-    private final long OPERATION_TIMEOUT = 30_000;
+    private final long OPERATION_TIMEOUT = 60_000;
     private WalletServiceGrpc.WalletServiceBlockingStub walletServiceBlockingStub;
 
     @Value("${wallet.server.address}")

@@ -9,6 +9,10 @@ build Docker images, create and run Docker containers (including MySql container
 
 ## Demo Video 
 
+The recording is stored at the GoogleDrive by the following link:
+https://drive.google.com/file/d/1TYlmAaHVivwLOsfmVahaQGtEV5z9pbMA/view?usp=sharing 
+
+
 ## System requirements and expected performance
 The solution is tested on the developer's laptop with the following characteristics:
 - MacBook Pro; Intel Core i7 2.2 GHz; Memory: 16GB 
