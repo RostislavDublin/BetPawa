@@ -16,11 +16,14 @@ The solution is tested on the developer's laptop with the following characterist
 
 When tested on local Docker Host, the memory was constrained by 3Gb; 
 
-The following performance was reached:
+The following performance was reached on both dockerized and not-dockerised environments 
+with the reference workload "1000 users * 1 thread-per-user * round-per-thread" and 16 executor threads: 
 - On the "cold" (just started) Server with the L2 cache not yet populated 
 (with any operation needed to lift the data from the MySql DB) the performance 
-was between   
-
+was between 250 and 350 operations/second
+- On the "warmed" Server with the L2 cache populated the performance 
+was between 250 and 500 operations/second
+- On some other specific workloads the performance was up to 750 operations/second
 
 ## Limitations of the current version
 - The Integer data type is used even for money representation (just for speed and simplicity of prototyping and
@@ -41,7 +44,9 @@ without any CI/CD engine (just to show how it may be dockerized).
 - L2: Ehcache 3.8;
 - DB: MySql, H2;  
 - Test: Power Mockito 2.0.4, Junit 4.12;
-- Gradle 5.6.2   
+- Gradle 5.6.2
+- Docker 19.03.1
+   
 
 ## Repository structure
 The root gradle project is named "Wallet". 
